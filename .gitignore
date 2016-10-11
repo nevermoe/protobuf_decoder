@@ -1,0 +1,7 @@
+*
+!ADDRESS_BOOK_FILE
+!README.md
+!addressbook.proto
+!parse.py
+!write_msg.py
+!.gitignore
