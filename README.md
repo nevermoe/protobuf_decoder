@@ -22,7 +22,7 @@ This is a protobuf-decoder which can decode protobuf binary file without .proto 
 	  	(3) embedded message:
 		  	(1) 32-bit: 0x4426b1ba / 666.776978
 	  (5) embedded message:
-		  (1) string: 0800000
+		(1) string: 0800000
 (2) 32-bit: 0x4048f5c3 / 3.140000    
     ```
     You can compare this result with the google's official `decode_raw` result using `cat ADDRESS_BOOK_FILE | protoc --decode_raw`
