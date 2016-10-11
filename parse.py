@@ -10,7 +10,7 @@ def GetWireFormat(data):
 
 def ParseData(data, start, end, depth = 0):
     global strings
-    curStrIndex = len(strings)
+    #curStrIndex = len(strings)
     #print strings
     while start < end:
         (wire_type, field_number) = GetWireFormat(ord(data[start]))
@@ -57,6 +57,7 @@ def ParseData(data, start, end, depth = 0):
             
         
         elif wire_type == 0x02:#Length-delimited
+            curStrIndex = len(strings)
             stringLen = ord(data[start+1])
             if depth != 0:
                 strings.append('\t'*depth)

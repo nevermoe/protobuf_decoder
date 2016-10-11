@@ -29,9 +29,10 @@ def PromptForAddress(person):
     phone_number2.number = number
 
     #type = raw_input("Is this a mobile, home, or work phone? ")
-    if type == "mobile":
-      phone_number.type = addressbook_pb2.Person.MOBILE
-      phone_number2.type = addressbook_pb2.Person.MOBILE
+    type = "home"
+    if type == "home":
+      phone_number.type = addressbook_pb2.Person.HOME
+      phone_number2.type = addressbook_pb2.Person.HOME
     else:
       print "Unknown phone type; leaving as default value."
 
