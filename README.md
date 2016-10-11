@@ -29,5 +29,5 @@ This is a protobuf-decoder which can decode protobuf binary file without .proto 
     
     
 ## TODO
-1. Allow modify and re-encoding
+1. Allow modify and re-encoding (completed)
 2. Integrate to Burp
