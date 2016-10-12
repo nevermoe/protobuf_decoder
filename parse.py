@@ -5,7 +5,6 @@ import json
 import traceback
 
 strings = []
-messages = {}
 
 def GetWireFormat(data):
     wire_type = data & 0x7
@@ -68,7 +67,7 @@ def ParseData(data, start, end, messages, depth = 0):
             if depth != 0:
                 strings.append('\t'*depth)
             strings.append("(%d) Varint: %d\n" % (field_number, num))
-            messages['%d:%d:Varint' % (field_number,ordinary)] = num
+            messages['%02d:%02d:Varint' % (field_number,ordinary)] = num
             ordinary  = ordinary + 1
 
         elif wire_type == 0x01:#64-bit
@@ -83,30 +82,37 @@ def ParseData(data, start, end, messages, depth = 0):
                 floatNum = struct.unpack('d',struct.pack('q',int(hex(num),16)))
                 floatNum = floatNum[0]
             except:
-                floatNum = -99999.8888
+                floatNum = None
                 
             if depth != 0:
                 strings.append('\t'*depth)
-            strings.append("(%d) 64-bit: 0x%x / %f\n" % (field_number, num, floatNum))
-            messages['%d:%d:64-bit' % (field_number,ordinary)] = num
+            if floatNum != None:
+                strings.append("(%d) 64-bit: 0x%x / %f\n" % (field_number, num, floatNum))
+                messages['%02d:%02d:64-bit' % (field_number,ordinary)] = floatNum
+            else:
+                strings.append("(%d) 64-bit: 0x%x\n" % (field_number, num))
+                messages['%02d:%02d:64-bit' % (field_number,ordinary)] = num
+
+
             ordinary = ordinary + 1
 
             
         elif wire_type == 0x02:#Length-delimited
             curStrIndex = len(strings)
             (stringLen, start, success) = RetrieveInt(data, start+1, end)
+            if success == False:
+                return False
             #stringLen = ord(data[start+1])
             if depth != 0:
                 strings.append('\t'*depth)
             strings.append("(%d) embedded message:\n" % field_number)
-            messages['%d:%d:embedded message' % (field_number, ordinary)] = {}
-            #ret = ParseData(data, start+2, start+2+stringLen, messages['%d:%d:embedded message' % (field_number, ordinary)], depth+1)
-            ret = ParseData(data, start, start+stringLen, messages['%d:%d:embedded message' % (field_number, ordinary)], depth+1)
+            messages['%02d:%02d:embedded message' % (field_number, ordinary)] = {}
+            ret = ParseData(data, start, start+stringLen, messages['%02d:%02d:embedded message' % (field_number, ordinary)], depth+1)
             #print '%d:%d:embedded message' % (field_number, ordinary)
             if ret == False:
                 strings = strings[0:curStrIndex]    #pop failed result
                 #print 'pop: %d:%d:embedded message' % (field_number, ordinary)
-                messages.pop('%d:%d:embedded message' % (field_number, ordinary), None)
+                messages.pop('%02d:%02d:embedded message' % (field_number, ordinary), None)
                 #print messages
                 if depth != 0:
                     strings.append('\t'*depth)
@@ -118,7 +124,7 @@ def ParseData(data, start, end, messages, depth = 0):
                     #print data[start:start+stringLen]
                     data[start:start+stringLen].decode('utf-8').encode('utf-8')
                     strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
-                    messages['%d:%d:string' % (field_number, ordinary)] = data[start:start+stringLen]
+                    messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
                 except:
                     #print traceback.format_exc()
                     #hexStr = ['0x%x' % ord(x) for x in data[start+2:start+2+stringLen]]
@@ -129,7 +135,7 @@ def ParseData(data, start, end, messages, depth = 0):
                     hexStr = ['0x%x' % ord(x) for x in data[start:start+stringLen]]
                     hexStr = ':'.join(hexStr)
                     strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
-                    messages['%d:%d:bytes' % (field_number, ordinary)] = hexStr
+                    messages['%02d:%02d:bytes' % (field_number, ordinary)] = hexStr
 
             ordinary = ordinary + 1
             #start = start+2+stringLen
@@ -147,13 +153,18 @@ def ParseData(data, start, end, messages, depth = 0):
                 floatNum = struct.unpack('f',struct.pack('i',int(hex(num),16)))
                 floatNum = floatNum[0]
             except:
-                floatNum = -99999.8888
+                floatNum = None
 
                 
             if depth != 0:
                 strings.append('\t'*depth)
-            strings.append("(%d) 32-bit: 0x%x / %f\n" % (field_number, num, floatNum))
-            messages['%d:%d:32-bit' % (field_number,ordinary)] = num 
+            if floatNum != None:
+                strings.append("(%d) 32-bit: 0x%x / %f\n" % (field_number, num, floatNum))
+                messages['%02d:%02d:32-bit' % (field_number,ordinary)] = floatNum
+            else:
+                strings.append("(%d) 32-bit: 0x%x\n" % (field_number, num))
+                messages['%02d:%02d:32-bit' % (field_number,ordinary)] = num 
+
             ordinary = ordinary + 1
 
 
@@ -171,15 +182,10 @@ def ParseProto(fileName):
     data = open(fileName, "rb").read()
     size = len(data)
 
-    global messages
+    messages = {}
     ParseData(data, 0, size, messages)
-    for str in strings:
-        try:
-            print str,
-        except:
-            pass
 
-    #print json.dumps(messages)
+    return messages
 
 def GenValueList(value):
     valueList = []
@@ -309,33 +315,48 @@ def ReEncode(messages, output):
     
 
 def SaveModification(messages, fileName):
-    f = open(fileName, 'wb')
     output = list()
     ReEncode(messages, output)
-    #print output
+    f = open(fileName, 'wb')
     f.write(bytearray(output))
     f.close()
     
 
 if __name__ == "__main__":
     if sys.argv[1] == "dec":
-        ParseProto('tmp.pb')
-
+        messages = ParseProto('tmp.pb')
 
         f = open('tmp.json', 'wb')
-        json.dump(messages,f)
+        json.dump(messages, f, indent=4, sort_keys=True)
+        f.close()
+
+        f = open('tmp.json', 'r')
+        parsedJson = json.load(f)
+        #print json.dumps(parsedJson, indent=4, sort_keys=True)
+        for str in strings:
+            try:
+                print str,
+            except:
+                pass
+        f.close()
 
     elif sys.argv[1] == "enc":
-        #continue;
-        print "enc"
+
+        f = open('tmp.json', 'r')
+        messages = json.load(f)
+        f.close()
+
+        SaveModification(messages, "tmp.pb")
+
     else:
-        ParseProto(sys.argv[1])
+        messages = ParseProto(sys.argv[1])
 
         #messages['1:0:embedded message']['2:1:Varint'] = 554321
         #messages['1:0:embedded message']['1:0:string'] = 'あなたは？'
         #print json.dumps(messages)
 
         f = open('tmp.json', 'wb')
-        json.dump(messages,f)
+        print json.dumps(messages, indent=4, sort_keys=True)
+        f.close()
         SaveModification(messages, "modified")
 

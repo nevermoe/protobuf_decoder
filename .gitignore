@@ -5,3 +5,4 @@
 !parse.py
 !write_msg.py
 !.gitignore
+!protobuf_decoder.py
