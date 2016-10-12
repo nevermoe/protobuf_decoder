@@ -226,6 +226,26 @@ def WriteVarint(field_number, value, output):
     
     return byteWritten
 
+def Write64bitFloat(field_number, value, output):
+    byteWritten = 0
+    wireFormat = (field_number << 3) | 0x01
+    output.append(wireFormat)
+    byteWritten += 1
+    
+    bytesStr = struct.pack('d', value).encode('hex')
+    n = 2
+    bytesList = [bytesStr[i:i+n] for i in range(0, len(bytesStr), n)]
+    #i = len(bytesList) - 1
+    #while i >= 0:
+    #    output.append(int(bytesList[i],16))
+    #    byteWritten += 1
+    #    i -= 1
+    for i in range(0,len(bytesList)):
+        output.append(int(bytesList[i],16))
+        byteWritten += 1
+
+    return byteWritten
+
 def Write64bit(field_number, value, output):
     byteWritten = 0
     wireFormat = (field_number << 3) | 0x01
@@ -236,6 +256,27 @@ def Write64bit(field_number, value, output):
         output.append(value & 0xFF)
         value = (value >> 8)
         byteWritten += 1
+
+    return byteWritten
+
+def Write32bitFloat(field_number, value, output):
+    byteWritten = 0
+    wireFormat = (field_number << 3) | 0x05
+    output.append(wireFormat)
+    byteWritten += 1
+    
+    bytesStr = struct.pack('f', value).encode('hex')
+    n = 2
+    bytesList = [bytesStr[i:i+n] for i in range(0, len(bytesStr), n)]
+    #i = len(bytesList) - 1
+    #while i >= 0:
+    #    output.append(int(bytesList[i],16))
+    #    byteWritten += 1
+    #    i -= 1
+    for i in range(0,len(bytesList)):
+        output.append(int(bytesList[i],16))
+        byteWritten += 1
+
 
     return byteWritten
 
@@ -263,9 +304,15 @@ def ReEncode(messages, output):
         if wire_type == 'Varint':
             byteWritten += WriteVarint(field_number, value, output)
         elif wire_type == '32-bit':
-            byteWritten += Write32bit(field_number, value, output)
+            if type(value) == type(float(1.0)):
+                byteWritten += Write32bitFloat(field_number, value, output)
+            else:
+                byteWritten += Write32bit(field_number, value, output)
         elif wire_type == '64-bit':
-            byteWritten += Write64bit(field_number, value, output)
+            if type(value) == type(float(1.0)):
+                byteWritten += Write64bitFloat(field_number, value, output)
+            else:
+                byteWritten += Write64bit(field_number, value, output)
         elif wire_type == 'embedded message':
             wireFormat = (field_number << 3) | 0x02 
             output.append(wireFormat)
@@ -351,9 +398,11 @@ if __name__ == "__main__":
     else:
         messages = ParseProto(sys.argv[1])
 
-        #messages['1:0:embedded message']['2:1:Varint'] = 554321
-        #messages['1:0:embedded message']['1:0:string'] = 'あなたは？'
-        #print json.dumps(messages)
+        for str in strings:
+            try:
+                print str,
+            except:
+                pass
 
         f = open('tmp.json', 'wb')
         print json.dumps(messages, indent=4, sort_keys=True)
