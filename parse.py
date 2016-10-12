@@ -74,6 +74,8 @@ def ParseData(data, start, end, messages, depth = 0):
             num = 0
             pos = 7
             while pos >= 0:
+                if start+1+pos >= end:
+                    return False
                 num = (num << 8) + ord(data[start+1+pos])
                 pos = pos - 1
 
@@ -107,6 +109,11 @@ def ParseData(data, start, end, messages, depth = 0):
                 strings.append('\t'*depth)
             strings.append("(%d) embedded message:\n" % field_number)
             messages['%02d:%02d:embedded message' % (field_number, ordinary)] = {}
+            if start+stringLen >= end:
+                strings = strings[0:curStrIndex]    #pop failed result
+                messages.pop('%02d:%02d:embedded message' % (field_number, ordinary), None)
+                return False
+
             ret = ParseData(data, start, start+stringLen, messages['%02d:%02d:embedded message' % (field_number, ordinary)], depth+1)
             #print '%d:%d:embedded message' % (field_number, ordinary)
             if ret == False:
@@ -117,21 +124,11 @@ def ParseData(data, start, end, messages, depth = 0):
                 if depth != 0:
                     strings.append('\t'*depth)
                 try:
-                    #print data[start+2:start+2+stringLen]
-                    #data[start+2:start+2+stringLen].decode('utf-8').encode('utf-8')
-                    #strings.append("(%d) string: %s\n" % (field_number, data[start+2:start+2+stringLen]))
-                    #messages['%d:%d:string' % (field_number, ordinary)] = data[start+2:start+2+stringLen]
-                    #print data[start:start+stringLen]
                     data[start:start+stringLen].decode('utf-8').encode('utf-8')
                     strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
                     messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
                 except:
-                    #print traceback.format_exc()
-                    #hexStr = ['0x%x' % ord(x) for x in data[start+2:start+2+stringLen]]
-                    #hexStr = ':'.join(hexStr)
-                    #strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
-                    #messages['%d:%d:bytes' % (field_number, ordinary)] = hexStr
-                    #print traceback.format_exc()
+                    print traceback.format_exc()
                     hexStr = ['0x%x' % ord(x) for x in data[start:start+stringLen]]
                     hexStr = ':'.join(hexStr)
                     strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
@@ -145,6 +142,9 @@ def ParseData(data, start, end, messages, depth = 0):
             num = 0
             pos = 3
             while pos >= 0:
+
+                if start+1+pos >= end:
+                    return False
                 num = (num << 8) + ord(data[start+1+pos])
                 pos = pos - 1
 
