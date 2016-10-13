@@ -35,6 +35,6 @@ You can also use this script as a burp plugin:
 3. All is done! You are now able to view protobuf binary in json format. You can also modify the value to what you want! But donnot modify the keys unless you know what you are doing.
 
 ## ScreenShots:
-
-
+![img1](https://www.nevermoe.com/wp-content/uploads/2016/10/スクリーンショット-2016-10-13-15.05.04.png)
+![img2](https://www.nevermoe.com/wp-content/uploads/2016/10/スクリーンショット-2016-10-13-15.05.24.png)
 
