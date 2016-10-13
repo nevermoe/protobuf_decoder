@@ -16,8 +16,7 @@ import ast
 import json
 
 #sys.path.append('/usr/local/lib/python2.7/site-packages')
-sys.path.append('/Library/Python/2.7/site-packages')
-import msgpack
+#sys.path.append('/Library/Python/2.7/site-packages')
 
 
 class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
@@ -123,8 +122,10 @@ class AESHelperTab(IMessageEditorTab):
 
             parsedJson = ''
             try:
-                proc = subprocess.Popen(['python', '/Users/nevermoe/Documents/git_code/protobuf_test/parse.py',\
-                        'dec'],\
+                #proc = subprocess.Popen(['python', '/Users/nevermoe/Documents/git_code/protobuf_test/parse.py',\
+                #        'dec'],\
+                #        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc = subprocess.Popen(['python', 'parse.py','dec'],\
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.wait()
                 #f = open('tmp.json', 'r')
@@ -170,8 +171,10 @@ class AESHelperTab(IMessageEditorTab):
 
                 
             try:
-                proc = subprocess.Popen(['python', '/Users/nevermoe/Documents/git_code/protobuf_test/parse.py',\
-                        'enc'],\
+                #proc = subprocess.Popen(['python', '/Users/nevermoe/Documents/git_code/protobuf_test/parse.py',\
+                #        'enc'],\
+                #        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc = subprocess.Popen(['python', 'parse.py', 'enc'],\
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.wait()
                 output = proc.stdout.read()

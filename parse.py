@@ -6,6 +6,36 @@ import traceback
 
 strings = []
 
+def GetDynamicWireFormat(data, start, end):
+    wire_type = ord(data[start]) & 0x7
+    firstByte = ord(data[start])
+    if (firstByte & 0x80) == 0:
+        field_number = (firstByte >> 3)
+        return (start+1, wire_type, field_number)
+    else:
+        byteList = []
+        pos = 0
+        while True:
+            if start+pos >= end:
+                return (None, None, None)
+            oneByte = ord(data[start+pos])
+            byteList.append(oneByte & 0x7F)
+            pos = pos + 1
+            if oneByte & 0x80 == 0x0:
+                break;
+
+        newStart = start + pos
+
+        index = len(byteList) - 1
+        field_number = 0
+        while index >= 0:
+            field_number = (field_number << 0x7) + byteList[index]
+            index = index - 1
+
+        field_number = (field_number >> 3)
+        return (newStart, wire_type, field_number)
+
+
 def GetWireFormat(data):
     wire_type = data & 0x7
     field_number = (data & 0xF8) >> 3
@@ -33,15 +63,25 @@ def RetrieveInt(data, start, end):
         index = index - 1
     return (num, newStart, True)
 
+
+def ParseRepeatedField(data, start, end, message, depth = 0):
+    #TODO
+    #ParseRepeatedVarint(data, start, end, message)
+    return False
+
 def ParseData(data, start, end, messages, depth = 0):
     global strings
     #print strings
     ordinary = 0
     while start < end:
-        (wire_type, field_number) = GetWireFormat(ord(data[start]))
+        #(wire_type, field_number) = GetWireFormat(ord(data[start]))
+        (start, wire_type, field_number) = GetDynamicWireFormat(data, start, end)
+        if start == None:
+            return False
 
         if wire_type == 0x00:#Varint
-            (num, start, success) = RetrieveInt(data, start+1, end)
+            #(num, start, success) = RetrieveInt(data, start+1, end)
+            (num, start, success) = RetrieveInt(data, start, end)
             if success == False:
                 return False
 
@@ -55,12 +95,15 @@ def ParseData(data, start, end, messages, depth = 0):
             num = 0
             pos = 7
             while pos >= 0:
-                if start+1+pos >= end:
+                #if start+1+pos >= end:
+                if start+pos >= end:
                     return False
-                num = (num << 8) + ord(data[start+1+pos])
+                #num = (num << 8) + ord(data[start+1+pos])
+                num = (num << 8) + ord(data[start+pos])
                 pos = pos - 1
 
-            start = start + 9
+            #start = start + 9
+            start = start + 8
             try:
                 floatNum = struct.unpack('d',struct.pack('q',int(hex(num),16)))
                 floatNum = floatNum[0]
@@ -82,7 +125,8 @@ def ParseData(data, start, end, messages, depth = 0):
             
         elif wire_type == 0x02:#Length-delimited
             curStrIndex = len(strings)
-            (stringLen, start, success) = RetrieveInt(data, start+1, end)
+            #(stringLen, start, success) = RetrieveInt(data, start+1, end)
+            (stringLen, start, success) = RetrieveInt(data, start, end)
             if success == False:
                 return False
             #stringLen = ord(data[start+1])
@@ -104,16 +148,23 @@ def ParseData(data, start, end, messages, depth = 0):
                 #print messages
                 if depth != 0:
                     strings.append('\t'*depth)
-                try:
-                    data[start:start+stringLen].decode('utf-8').encode('utf-8')
-                    strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
-                    messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
-                except:
-                    #print traceback.format_exc()
-                    hexStr = ['0x%x' % ord(x) for x in data[start:start+stringLen]]
-                    hexStr = ':'.join(hexStr)
-                    strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
-                    messages['%02d:%02d:bytes' % (field_number, ordinary)] = hexStr
+
+                strings.append("(%d) repeated:\n" % field_number)
+                messages['%02d:%02d:repeated' % (field_number, ordinary)] = {}
+                ret = ParseRepeatedField(data, start, start+stringLen, messages['%02d:%02d:repeated' % (field_number, ordinary)], depth+1)
+                if ret == False:
+                    strings = strings[0:curStrIndex]    #pop failed result
+                    messages.pop('%02d:%02d:repeated' % (field_number, ordinary), None)
+                    try:
+                        data[start:start+stringLen].decode('utf-8').encode('utf-8')
+                        strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
+                        messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
+                    except:
+                        #print traceback.format_exc()
+                        hexStr = ['0x%x' % ord(x) for x in data[start:start+stringLen]]
+                        hexStr = ':'.join(hexStr)
+                        strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
+                        messages['%02d:%02d:bytes' % (field_number, ordinary)] = hexStr
 
             ordinary = ordinary + 1
             #start = start+2+stringLen
@@ -124,12 +175,15 @@ def ParseData(data, start, end, messages, depth = 0):
             pos = 3
             while pos >= 0:
 
-                if start+1+pos >= end:
+                #if start+1+pos >= end:
+                if start+pos >= end:
                     return False
-                num = (num << 8) + ord(data[start+1+pos])
+                #num = (num << 8) + ord(data[start+1+pos])
+                num = (num << 8) + ord(data[start+pos])
                 pos = pos - 1
 
-            start = start + 5
+            #start = start + 5
+            start = start + 4
             try:
                 floatNum = struct.unpack('f',struct.pack('i',int(hex(num),16)))
                 floatNum = floatNum[0]
@@ -149,12 +203,7 @@ def ParseData(data, start, end, messages, depth = 0):
             ordinary = ordinary + 1
 
 
-        else:#a real string
-            #strings = strings[0:-1]#pop 'embedded message'
-            #(wire_type, field_number) = GetWireFormat(ord(data[start-2]))
-            #strings.append("(%d) string: %s\n" % (field_number, data[start:end]))
-            #messages['%d:%d:string' % (field_number,ordinary)] = data[start:end]
-            #start = end
+        else:
             return False
 
     return True
@@ -195,8 +244,9 @@ def WriteValue(value, output):
 def WriteVarint(field_number, value, output):
     byteWritten = 0
     wireFormat = (field_number << 3) | 0x00
-    output.append(wireFormat)
-    byteWritten += 1
+    #output.append(wireFormat)
+    #byteWritten += 1
+    byteWritten += WriteValue(wireFormat, output)
     while value > 0:
         oneByte = (value & 0x7F)
         value = (value >> 0x7)
@@ -210,8 +260,9 @@ def WriteVarint(field_number, value, output):
 def Write64bitFloat(field_number, value, output):
     byteWritten = 0
     wireFormat = (field_number << 3) | 0x01
-    output.append(wireFormat)
-    byteWritten += 1
+    #output.append(wireFormat)
+    #byteWritten += 1
+    byteWritten += WriteValue(wireFormat, output)
     
     bytesStr = struct.pack('d', value).encode('hex')
     n = 2
@@ -230,8 +281,9 @@ def Write64bitFloat(field_number, value, output):
 def Write64bit(field_number, value, output):
     byteWritten = 0
     wireFormat = (field_number << 3) | 0x01
-    output.append(wireFormat)
-    byteWritten += 1
+    byteWritten += WriteValue(wireFormat, output)
+    #output.append(wireFormat)
+    #byteWritten += 1
     
     for i in range(0,8):
         output.append(value & 0xFF)
@@ -243,8 +295,9 @@ def Write64bit(field_number, value, output):
 def Write32bitFloat(field_number, value, output):
     byteWritten = 0
     wireFormat = (field_number << 3) | 0x05
-    output.append(wireFormat)
-    byteWritten += 1
+    #output.append(wireFormat)
+    #byteWritten += 1
+    byteWritten += WriteValue(wireFormat, output)
     
     bytesStr = struct.pack('f', value).encode('hex')
     n = 2
@@ -264,8 +317,9 @@ def Write32bitFloat(field_number, value, output):
 def Write32bit(field_number, value, output):
     byteWritten = 0
     wireFormat = (field_number << 3) | 0x05
-    output.append(wireFormat)
-    byteWritten += 1
+    #output.append(wireFormat)
+    #byteWritten += 1
+    byteWritten += WriteValue(wireFormat, output)
     
     for i in range(0,4):
         output.append(value & 0xFF)
@@ -296,10 +350,8 @@ def ReEncode(messages, output):
                 byteWritten += Write64bit(field_number, value, output)
         elif wire_type == 'embedded message':
             wireFormat = (field_number << 3) | 0x02 
-            output.append(wireFormat)
-            #output.append(0x00)#dummy number
+            byteWritten += WriteValue(wireFormat, output)
             index = len(output)
-            byteWritten += 1
             tmpByteWritten = ReEncode(messages[key], output)
             valueList = GenValueList(tmpByteWritten)
             listLen = len(valueList)
