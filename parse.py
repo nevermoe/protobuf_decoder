@@ -221,25 +221,31 @@ def ParseProto(fileName):
 
 def GenValueList(value):
     valueList = []
-    while value > 0:
+    #while value > 0:
+    while value >= 0:
         oneByte = (value & 0x7F)
         value = (value >> 0x7)
         if value > 0:
             oneByte |= 0x80
         valueList.append(oneByte)
+        if value == 0:
+            break
     
     return valueList
 
 
 def WriteValue(value, output):
     byteWritten = 0
-    while value > 0:
+    #while value > 0:
+    while value >= 0:
         oneByte = (value & 0x7F)
         value = (value >> 0x7)
         if value > 0:
             oneByte |= 0x80
         output.append(oneByte)
         byteWritten += 1
+        if value == 0:
+            break
     
     return byteWritten
 
@@ -249,13 +255,16 @@ def WriteVarint(field_number, value, output):
     #output.append(wireFormat)
     #byteWritten += 1
     byteWritten += WriteValue(wireFormat, output)
-    while value > 0:
+    #while value > 0:
+    while value >= 0:
         oneByte = (value & 0x7F)
         value = (value >> 0x7)
         if value > 0:
             oneByte |= 0x80
         output.append(oneByte)
         byteWritten += 1
+        if value == 0:
+            break
     
     return byteWritten
 
@@ -332,7 +341,8 @@ def Write32bit(field_number, value, output):
 
 def ReEncode(messages, output):
     byteWritten = 0
-    for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0])):
+    #for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0])):
+    for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0]+x.split(':')[1])):
         keyList = key.split(':')
         field_number = int(keyList[0])
         wire_type = keyList[2]
@@ -415,11 +425,11 @@ if __name__ == "__main__":
         f = open('tmp.json', 'r')
         parsedJson = json.load(f)
         #print json.dumps(parsedJson, indent=4, sort_keys=True)
-        for str in strings:
-            try:
-                print str,
-            except:
-                pass
+        #for str in strings:
+        #    try:
+        #        print str,
+        #    except:
+        #        pass
         f.close()
 
     elif sys.argv[1] == "enc":
@@ -433,11 +443,11 @@ if __name__ == "__main__":
     else:
         messages = ParseProto(sys.argv[1])
 
-        for str in strings:
-            try:
-                print str,
-            except:
-                pass
+        #for str in strings:
+        #    try:
+        #        print str,
+        #    except:
+        #        pass
 
         f = open('tmp.json', 'wb')
         print json.dumps(messages, indent=4, sort_keys=True)
