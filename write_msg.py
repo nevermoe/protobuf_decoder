@@ -10,7 +10,13 @@ def PromptForAddress(person):
   #person.name = raw_input("Enter name: ")
   person.id = 1234
   person.name = "わたし"
-  person.num = 1.233
+  #person.num = 1.233
+  #doubleNum1 = person.num.add()
+  #doubleNum2 = person.num.add()
+  #doubleNum1 = 3.2444
+  #doubleNum2 = 4.333
+  person.num.append(1.222)
+  person.num.append(3.222)
 
   #email = raw_input("Enter email address (blank for none): ")
   #if email != "":
