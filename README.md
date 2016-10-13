@@ -28,6 +28,13 @@ This is a protobuf-decoder which can decode protobuf binary file without .proto 
     You can compare this result with the google's official `decode_raw` result using `cat ADDRESS_BOOK_FILE | protoc --decode_raw`
     
     
-## TODO
-1. Allow modify and re-encoding (completed)
-2. Integrate to Burp
+## Burp Plugin
+You can also use this script as a burp plugin:
+1. Copy `parse.py` to your burpsuite's jar directory.
+2. Open burp, load `protobuf_decoder.py` as a burp extension.
+3. All is done! You are now able to view protobuf binary in json format. You can also modify the value to what you want! But donnot modify the keys unless you know what you are doing.
+
+## ScreenShots:
+
+
+
