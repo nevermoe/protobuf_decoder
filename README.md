@@ -30,6 +30,7 @@ This is a protobuf-decoder which can decode protobuf binary file without .proto 
     
 ## Burp Plugin
 You can also use this script as a burp plugin:
+
 1. Copy `parse.py` to your burpsuite's jar directory.
 2. Open burp, load `protobuf_decoder.py` as a burp extension.
 3. All is done! You are now able to view protobuf binary in json format. You can also modify the value to what you want! But donnot modify the keys unless you know what you are doing.
