@@ -155,6 +155,8 @@ def ParseData(data, start, end, messages, depth = 0):
                 if ret == False:
                     strings = strings[0:curStrIndex]    #pop failed result
                     messages.pop('%02d:%02d:repeated' % (field_number, ordinary), None)
+                    if depth != 0:
+                        strings.append('\t'*depth)
                     try:
                         data[start:start+stringLen].decode('utf-8').encode('utf-8')
                         strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
@@ -330,7 +332,7 @@ def Write32bit(field_number, value, output):
 
 def ReEncode(messages, output):
     byteWritten = 0
-    for key in sorted(messages.iterkeys()):
+    for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0])):
         keyList = key.split(':')
         field_number = int(keyList[0])
         wire_type = keyList[2]
