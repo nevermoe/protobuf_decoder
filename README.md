@@ -35,7 +35,9 @@ You can also use this script as a burp plugin:
 2. Open burp, load `protobuf_decoder.py` as a burp extension.
 3. All is done! You are now able to view protobuf binary in json format. You can also modify the value to what you want! But donnot modify the keys unless you know what you are doing.
 
-## ScreenShots:
+## Explanation:
 ![img1](https://www.nevermoe.com/wp-content/uploads/2016/10/スクリーンショット-2016-10-13-15.05.04.png)
 ![img2](https://www.nevermoe.com/wp-content/uploads/2016/10/スクリーンショット-2016-10-13-15.05.24.png)
+
+Note the keys of this json file is in the format of `field_number:id:type`. `field_number` is exactly the `field_number` in .proto file while  `id` has no meaning. It's just a field that helps to de-duplicate the keys in json.
 
