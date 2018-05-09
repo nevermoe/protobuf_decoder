@@ -13,26 +13,27 @@ This is a protobuf-decoder which can decode protobuf binary file without .proto 
     Now you can see the decoded field looks like:
     
     ```
-{
-    "01:00:embedded message": {
-        "01:00:string": "\u308f\u305f\u3057", 
-        "02:01:Varint": 1234, 
-        "04:02:bytes": "0x5a:0x64:0x3b:0xdf:0x4f:0x8d:0xf3:0x3f:0x2d:0xb2:0x9d:0xef:0xa7:0xc6:0x9:0x40", 
-        "05:03:embedded message": {
-            "01:00:Varint": 1, 
-            "02:01:string": "0800000", 
-            "03:02:embedded message": {
-                "01:00:32-bit": 666.7769775390625
+    {
+        "01:00:embedded message": {
+            "01:00:string": "\u308f\u305f\u3057", 
+            "02:01:Varint": 1234, 
+            "04:02:bytes": "0x5a:0x64:0x3b:0xdf:0x4f:0x8d:0xf3:0x3f:0x2d:0xb2:0x9d:0xef:0xa7:0xc6:0x9:0x40", 
+            "05:03:embedded message": {
+                "01:00:Varint": 1, 
+                "02:01:string": "0800000", 
+                "03:02:embedded message": {
+                    "01:00:32-bit": 666.7769775390625
+                }
+            }, 
+            "05:04:embedded message": {
+                "01:00:Varint": 1, 
+                "02:01:string": "0800000"
             }
         }, 
-        "05:04:embedded message": {
-            "01:00:Varint": 1, 
-            "02:01:string": "0800000"
-        }
-    }, 
-    "02:01:32-bit": 3.140000104904175
-}  
+        "02:01:32-bit": 3.140000104904175
+    }  
     ```
+    
     You can compare this result with the google's official `decode_raw` result using `cat ADDRESS_BOOK_FILE | protoc --decode_raw`
     
     
