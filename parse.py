@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import codecs
 import struct
 import json
 import traceback
@@ -36,10 +37,6 @@ def GetDynamicWireFormat(data, start, end):
         return (newStart, wire_type, field_number)
 
 
-def GetWireFormat(data):
-    wire_type = data & 0x7
-    field_number = (data & 0xF8) >> 3
-    return (wire_type, field_number)
 
 #return (num, newStart, success)
 def RetrieveInt(data, start, end):
@@ -74,7 +71,6 @@ def ParseData(data, start, end, messages, depth = 0):
     #print strings
     ordinary = 0
     while start < end:
-        #(wire_type, field_number) = GetWireFormat(ord(data[start]))
         (start, wire_type, field_number) = GetDynamicWireFormat(data, start, end)
         if start == None:
             return False
@@ -341,8 +337,8 @@ def Write32bit(field_number, value, output):
 
 def ReEncode(messages, output):
     byteWritten = 0
-    #for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0])):
-    for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0]+x.split(':')[1])):
+    #for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0]+x.split(':')[1])):
+    for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[1])):
         keyList = key.split(':')
         field_number = int(keyList[0])
         wire_type = keyList[2]
@@ -375,29 +371,20 @@ def ReEncode(messages, output):
             byteWritten += tmpByteWritten + listLen
         elif wire_type == 'string':
             wireFormat = (field_number << 3) | 0x02 
-            output.append(wireFormat)
-            byteWritten += 1
+            byteWritten += WriteValue(wireFormat, output)
 
-            bytesStr = [int(elem.encode("hex"),16) for elem in messages[key]]
+            bytesStr = [int(elem.encode("hex"),16) for elem in messages[key].encode('utf-8')]
 
             byteWritten += WriteValue(len(bytesStr),output)
-            #print "len(bytesStr): %d" % len(bytesStr)
-            #print "byteWritten: %d" % byteWritten
-            #print "output:", output
 
             output.extend(bytesStr)
             byteWritten += len(bytesStr)
         elif wire_type == 'bytes':
             wireFormat = (field_number << 3) | 0x02 
-            output.append(wireFormat)
-            byteWritten += 1
+            byteWritten += WriteValue(wireFormat, output)
 
             bytesStr = [int(byte,16) for byte in messages[key].split(':')]
             byteWritten += WriteValue(len(bytesStr),output)
-
-            #print "len(bytesStr): %d" % len(bytesStr)
-            #print "byteWritten: %d" % byteWritten
-            #print "output:", output
 
             output.extend(bytesStr)
             byteWritten += len(bytesStr)
@@ -419,12 +406,9 @@ if __name__ == "__main__":
         messages = ParseProto('tmp.pb')
 
         f = open('tmp.json', 'wb')
-        json.dump(messages, f, indent=4, sort_keys=True)
+        json.dump(messages, f, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
         f.close()
 
-        f = open('tmp.json', 'r')
-        parsedJson = json.load(f)
-        #print json.dumps(parsedJson, indent=4, sort_keys=True)
         #for str in strings:
         #    try:
         #        print str,
@@ -434,8 +418,8 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "enc":
 
-        f = open('tmp.json', 'r')
-        messages = json.load(f)
+        f = codecs.open('tmp.json', 'r', 'utf-8')
+        messages = json.load(f, encoding='utf-8')
         f.close()
 
         SaveModification(messages, "tmp.pb")
