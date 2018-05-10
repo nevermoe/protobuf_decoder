@@ -62,9 +62,12 @@ def RetrieveInt(data, start, end):
 
 
 def ParseRepeatedField(data, start, end, message, depth = 0):
-    #TODO
-    #ParseRepeatedVarint(data, start, end, message)
-    return False
+    while start < end:
+        (num, start, success) = RetrieveInt(data, start, end)
+        if success == False:
+            return False
+        message.append(num)
+    return True
 
 def ParseData(data, start, end, messages, depth = 0):
     global strings
@@ -146,23 +149,25 @@ def ParseData(data, start, end, messages, depth = 0):
                     strings.append('\t'*depth)
 
                 strings.append("(%d) repeated:\n" % field_number)
-                messages['%02d:%02d:repeated' % (field_number, ordinary)] = {}
-                ret = ParseRepeatedField(data, start, start+stringLen, messages['%02d:%02d:repeated' % (field_number, ordinary)], depth+1)
-                if ret == False:
-                    del strings[curStrIndex + 1:]    #pop failed result
-                    messages.pop('%02d:%02d:repeated' % (field_number, ordinary), None)
-                    if depth != 0:
-                        strings.append('\t'*depth)
-                    try:
-                        data[start:start+stringLen].decode('utf-8').encode('utf-8')
-                        strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
-                        messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
-                    except:
-                        #print traceback.format_exc()
-                        hexStr = ['0x%x' % ord(x) for x in data[start:start+stringLen]]
-                        hexStr = ':'.join(hexStr)
-                        strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
-                        messages['%02d:%02d:bytes' % (field_number, ordinary)] = hexStr
+                try:
+                    data[start:start+stringLen].decode('utf-8').encode('utf-8')
+                    strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
+                    messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
+                except:
+                   if depth != 0:
+                       strings.append('\t'*depth)
+
+                   strings.append("(%d) repeated:\n" % field_number)
+                   messages['%02d:%02d:repeated' % (field_number, ordinary)] = []
+                   ret = ParseRepeatedField(data, start, start+stringLen, messages['%02d:%02d:repeated' % (field_number, ordinary)], depth+1)
+                   if ret == False:
+                       del strings[curStrIndex + 1:]     #pop failed result
+                       messages.pop('%02d:%02d:repeated' % (field_number, ordinary), None)
+                       #print traceback.format_exc()
+                       hexStr = ['0x%x' % ord(x) for x in data[start:start+stringLen]]
+                       hexStr = ':'.join(hexStr)
+                       strings.append("(%d) bytes: %s\n" % (field_number, hexStr))
+                       messages['%02d:%02d:bytes' % (field_number, ordinary)] = hexStr
 
             ordinary = ordinary + 1
             #start = start+2+stringLen
@@ -335,6 +340,13 @@ def Write32bit(field_number, value, output):
 
     return byteWritten
 
+def WriteRepeatedField(message, output):
+    byteWritten = 0
+    for v in message:
+        byteWritten += WriteValue(v, output)
+    return byteWritten
+
+
 def ReEncode(messages, output):
     byteWritten = 0
     #for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0]+x.split(':')[1])):
@@ -361,6 +373,19 @@ def ReEncode(messages, output):
             byteWritten += WriteValue(wireFormat, output)
             index = len(output)
             tmpByteWritten = ReEncode(messages[key], output)
+            valueList = GenValueList(tmpByteWritten)
+            listLen = len(valueList)
+            for i in range(0,listLen):
+                output.insert(index, valueList[i])
+                index += 1
+            #output[index] = tmpByteWritten
+            #print "output:", output
+            byteWritten += tmpByteWritten + listLen
+        elif wire_type == 'repeated':
+            wireFormat = (field_number << 3) | 0x02
+            byteWritten += WriteValue(wireFormat, output)
+            index = len(output)
+            tmpByteWritten = WriteRepeatedField(messages[key], output)
             valueList = GenValueList(tmpByteWritten)
             listLen = len(valueList)
             for i in range(0,listLen):
