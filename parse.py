@@ -131,14 +131,14 @@ def ParseData(data, start, end, messages, depth = 0):
             strings.append("(%d) embedded message:\n" % field_number)
             messages['%02d:%02d:embedded message' % (field_number, ordinary)] = {}
             if start+stringLen > end:
-                strings = strings[0:curStrIndex]    #pop failed result
+                del strings[curStrIndex + 1:]    #pop failed result
                 messages.pop('%02d:%02d:embedded message' % (field_number, ordinary), None)
                 return False
 
             ret = ParseData(data, start, start+stringLen, messages['%02d:%02d:embedded message' % (field_number, ordinary)], depth+1)
             #print '%d:%d:embedded message' % (field_number, ordinary)
             if ret == False:
-                strings = strings[0:curStrIndex]    #pop failed result
+                del strings[curStrIndex + 1:]    #pop failed result
                 #print 'pop: %d:%d:embedded message' % (field_number, ordinary)
                 messages.pop('%02d:%02d:embedded message' % (field_number, ordinary), None)
                 #print messages
@@ -149,7 +149,7 @@ def ParseData(data, start, end, messages, depth = 0):
                 messages['%02d:%02d:repeated' % (field_number, ordinary)] = {}
                 ret = ParseRepeatedField(data, start, start+stringLen, messages['%02d:%02d:repeated' % (field_number, ordinary)], depth+1)
                 if ret == False:
-                    strings = strings[0:curStrIndex]    #pop failed result
+                    del strings[curStrIndex + 1:]    #pop failed result
                     messages.pop('%02d:%02d:repeated' % (field_number, ordinary), None)
                     if depth != 0:
                         strings.append('\t'*depth)
