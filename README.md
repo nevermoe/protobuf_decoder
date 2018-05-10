@@ -51,6 +51,8 @@ You can also use this script as a burp plugin:
 Note the keys of this json file is in the format of `field_number:id:type`. `field_number` is exactly the `field_number` in .proto file while  `id` has no meaning. It's just a field that helps to de-duplicate the keys in json.
 
 ## TODO
-1. Make better guess of packed repeated field.
-2. Deal with minus number.
+1. Deal with minus number.
+
+## Acknowledgements
+Thanks Mori for fixing bugs and improve this tool!
 
