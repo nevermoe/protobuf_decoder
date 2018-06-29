@@ -17,6 +17,7 @@ import json
 
 #sys.path.append('/usr/local/lib/python2.7/site-packages')
 #sys.path.append('/Library/Python/2.7/site-packages')
+import codecs
 
 
 class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
@@ -42,14 +43,14 @@ class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
     def createNewInstance(self, controller, editable):
         
         # create a new instance of our custom editor tab
-        return AESHelperTab(self, controller, editable)
+        return ProtobufHelperTab(self, controller, editable)
         
 
 # 
 # class implementing IMessageEditorTab
 #
 
-class AESHelperTab(IMessageEditorTab):
+class ProtobufHelperTab(IMessageEditorTab):
 
     def __init__(self, extender, controller, editable):
         self.extender = extender
@@ -110,7 +111,7 @@ class AESHelperTab(IMessageEditorTab):
             self.txtInput.setText(None)
             self.txtInput.setEditable(False)
 
-        if host == "pgorelease.nianticlabs.com" or True:
+        if host == "example.com" or True:
             res = self.extender.helpers.analyzeResponse(content)
             self.httpHeaders = res.getHeaders() #remember headers
 
@@ -122,9 +123,6 @@ class AESHelperTab(IMessageEditorTab):
 
             parsedJson = ''
             try:
-                #proc = subprocess.Popen(['python', '/Users/nevermoe/Documents/git_code/protobuf_test/parse.py',\
-                #        'dec'],\
-                #        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc = subprocess.Popen(['python', 'parse.py','dec'],\
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.wait()
@@ -141,11 +139,11 @@ class AESHelperTab(IMessageEditorTab):
             print "errors: %s" % (errors)
 
             try:
-                f = open('tmp.json', 'r')
+                f = codecs.open('tmp.json', 'r', 'utf-8')
                 parsedJson = json.load(f, encoding='utf-8')
                 f.close()
-                pretty = json.dumps(parsedJson, indent=4, sort_keys=True, encoding='utf-8') 
-                self.txtInput.setText(pretty)
+                pretty = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8') 
+                self.txtInput.setText(pretty.encode('utf-8'))
                 text = self.txtInput.getText()
                 self.txtInput.setEditable(True)
             except:
@@ -162,18 +160,15 @@ class AESHelperTab(IMessageEditorTab):
 
             try:
                 text = self.txtInput.getText()
-                f = open('tmp.json', 'w')
+                f = codecs.open('tmp.json', 'w', 'utf-8')
                 jsonFormat = json.loads(text.tostring(), encoding='utf-8')
-                json.dump(jsonFormat, f, indent=4, sort_keys = True, encoding='utf-8')
+                json.dump(jsonFormat, f, indent=4, sort_keys = True, ensure_ascii=False, encoding='utf-8')
                 f.close()
             except:
                 print traceback.format_exc()
 
                 
             try:
-                #proc = subprocess.Popen(['python', '/Users/nevermoe/Documents/git_code/protobuf_test/parse.py',\
-                #        'enc'],\
-                #        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc = subprocess.Popen(['python', 'parse.py', 'enc'],\
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.wait()
