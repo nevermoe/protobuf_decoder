@@ -79,13 +79,13 @@ class AESHelperTab(IMessageEditorTab):
         #    req = self.extender.helpers.analyzeRequest(content)
         #    headers = req.getHeaders()
 
-        #    if "Host: smpsjlgpp.linegame.jp:10010" in headers:
-        #        self.key = pokopang_key
-        #        return not self.extender.helpers.getRequestParameter(content, "q") is None
+        #    if "Host: ttt" in headers:
+        #        self.key = some_key
+        #        return not self.extender.helpers.getRequestParameter(content, "x") is None
 
-        #    elif "Host: lgpkpk-game.linegame.jp:10010" in headers:
-        #        self.key = pokopoko_key
-        #        return not self.extender.helpers.getRequestParameter(content, "q") is None
+        #    elif "Host: yyy" in headers:
+        #        self.key = some_key2
+        #        return not self.extender.helpers.getRequestParameter(content, "x") is None
 
         #    else:
         #        return False
@@ -142,9 +142,9 @@ class AESHelperTab(IMessageEditorTab):
 
             try:
                 f = open('tmp.json', 'r')
-                parsedJson = json.load(f)
+                parsedJson = json.load(f, encoding='utf-8')
                 f.close()
-                pretty = json.dumps(parsedJson, indent=4, sort_keys=True) 
+                pretty = json.dumps(parsedJson, indent=4, sort_keys=True, encoding='utf-8') 
                 self.txtInput.setText(pretty)
                 text = self.txtInput.getText()
                 self.txtInput.setEditable(True)
@@ -163,8 +163,8 @@ class AESHelperTab(IMessageEditorTab):
             try:
                 text = self.txtInput.getText()
                 f = open('tmp.json', 'w')
-                jsonFormat = json.loads(text.tostring())
-                json.dump(jsonFormat, f, indent=4, sort_keys = True)
+                jsonFormat = json.loads(text.tostring(), encoding='utf-8')
+                json.dump(jsonFormat, f, indent=4, sort_keys = True, encoding='utf-8')
                 f.close()
             except:
                 print traceback.format_exc()
