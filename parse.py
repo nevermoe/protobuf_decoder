@@ -452,14 +452,19 @@ if __name__ == "__main__":
     else:
         messages = ParseProto(sys.argv[1])
 
-        #for str in strings:
-        #    try:
-        #        print str,
-        #    except:
-        #        pass
+        print json.dumps(messages, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
 
+        # modify any field you like
+        #messages['01:00:embedded message']['01:00:string'] = "あなた"
+
+        # dump and reload the 'messages' json objects to ensure it being utf-8 encoded
         f = open('tmp.json', 'wb')
-        print json.dumps(messages, indent=4, sort_keys=True)
+        json.dump(messages, f, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
         f.close()
+        f = codecs.open('tmp.json', 'r', 'utf-8')
+        messages = json.load(f, encoding='utf-8')
+        f.close()
+
+        # the modification is saved in file named "modified"
         SaveModification(messages, "modified")
 

@@ -15,7 +15,7 @@ This is a protobuf-decoder which can decode protobuf binary file without .proto 
     ```
     {
         "01:00:embedded message": {
-            "01:00:string": "\u308f\u305f\u3057", 
+            "01:00:string": "わたし", 
             "02:01:Varint": 1234, 
             "04:02:bytes": "0x5a:0x64:0x3b:0xdf:0x4f:0x8d:0xf3:0x3f:0x2d:0xb2:0x9d:0xef:0xa7:0xc6:0x9:0x40", 
             "05:03:embedded message": {
