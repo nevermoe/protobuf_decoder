@@ -4,6 +4,7 @@ import codecs
 import struct
 import json
 import traceback
+import argparse
 
 strings = []
 
@@ -210,6 +211,12 @@ def ParseData(data, start, end, messages, depth = 0):
             return False
 
     return True
+
+def Decode(binary):
+    messages = {}
+    ParseData(binary, 0, len(binary), messages)
+
+    return messages
 
 def ParseProto(fileName):
     data = open(fileName, "rb").read()
@@ -427,10 +434,19 @@ def SaveModification(messages, fileName):
     
 
 if __name__ == "__main__":
-    if sys.argv[1] == "dec":
-        messages = ParseProto('tmp.pb')
+    # Create the parser and add arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", help="input file.")
+    parser.add_argument("-o", "--output", help="output file.")
+    parser.add_argument("-e", "--enc_or_dec", help="enc or dec.")
 
-        f = open('tmp.json', 'wb')
+    # Parse and print the results
+    args = parser.parse_args()
+
+    if args.enc_or_dec == "dec":
+        messages = ParseProto(args.input)
+
+        f = open(args.output, 'wb')
         json.dump(messages, f, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
         f.close()
 
@@ -441,13 +457,13 @@ if __name__ == "__main__":
         #        pass
         f.close()
 
-    elif sys.argv[1] == "enc":
+    elif args.enc_or_dec == "enc":
 
-        f = codecs.open('tmp.json', 'r', 'utf-8')
+        f = codecs.open(args.input, 'r', 'utf-8')
         messages = json.load(f, encoding='utf-8')
         f.close()
 
-        SaveModification(messages, "tmp.pb")
+        SaveModification(messages, args.output)
 
     else:
         messages = ParseProto(sys.argv[1])
