@@ -44,6 +44,27 @@ You can also use this script as a burp plugin:
 2. Open burp, load `protobuf_decoder.py` as a burp extension.
 3. All is done! You are now able to view protobuf binary in json format. You can also modify the value to what you want! But donnot modify the keys unless you know what you are doing.
 
+## Use as a module
+You can also use this script as python module:
+
+1. Clone to your project folder
+  ```
+  git clone https://github.com/nevermoe/protobuf_decoder.git
+  ```
+
+2. import and use.
+  ```
+  import protobuf_decoder.parse as pbparser
+
+  # encode, data is bytes type, messages returned is json type
+  messages = pbparser.Decode(data)
+
+  #decode, messages's type is json, data's type is bytes
+  output = list()
+  bytesWritten = pbparser.ReEncode(messages, output)
+  data = bytes(bytearray(output) )
+  ```
+
 ## Explanation:
 ![img1](https://www.nevermoe.com/wp-content/uploads/2016/10/スクリーンショット-2016-10-13-15.05.04.png)
 ![img2](https://www.nevermoe.com/wp-content/uploads/2016/10/スクリーンショット-2016-10-13-15.05.24.png)
