@@ -56,10 +56,10 @@ You can also use this script as python module:
   ```
   import protobuf_decoder.parse as pbparser
 
-  # encode, data is bytes type, messages returned is json type
+  # decode, data is bytes type, messages returned is json type
   messages = pbparser.Decode(data)
 
-  #decode, messages's type is json, data's type is bytes
+  #encode, messages's type is json, data's type is bytes
   output = list()
   bytesWritten = pbparser.ReEncode(messages, output)
   data = bytes(bytearray(output) )
