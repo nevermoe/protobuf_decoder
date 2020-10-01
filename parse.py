@@ -347,6 +347,13 @@ def WriteRepeatedField(message, output):
     return byteWritten
 
 
+def Decode(binary):
+    messages = {}
+    ParseData(binary, 0, len(binary), messages)
+
+    return messages
+
+
 def ReEncode(messages, output):
     byteWritten = 0
     #for key in sorted(messages.iterkeys(), key= lambda x: int(x.split(':')[0]+x.split(':')[1])):
