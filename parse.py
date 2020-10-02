@@ -349,7 +349,10 @@ def WriteRepeatedField(message, output):
 
 def Decode(binary):
     messages = {}
-    ParseData(binary, 0, len(binary), messages)
+    ret = ParseData(binary, 0, len(binary), messages)
+
+    if ret == False:
+        return False
 
     return messages
 
