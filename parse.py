@@ -150,9 +150,9 @@ def ParseData(data, start, end, messages, depth = 0):
 
                 strings.append("(%d) repeated:\n" % field_number)
                 try:
-                    data[start:start+stringLen].decode('utf-8').encode('utf-8')
+                    data[start:start+stringLen].decode('utf-8')# .encode('utf-8')
                     strings.append("(%d) string: %s\n" % (field_number, data[start:start+stringLen]))
-                    messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen]
+                    messages['%02d:%02d:string' % (field_number, ordinary)] = data[start:start+stringLen].decode('utf-8')
                 except:
                    if depth != 0:
                        strings.append('\t'*depth)
@@ -440,7 +440,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "dec":
         messages = ParseProto('tmp.pb')
 
-        f = open('tmp.json', 'wb')
+        f = codecs.open('tmp.json', 'wb', 'utf-8')
         json.dump(messages, f, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
         f.close()
 
