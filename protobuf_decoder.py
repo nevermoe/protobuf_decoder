@@ -142,8 +142,10 @@ class ProtobufHelperTab(IMessageEditorTab):
                 f = codecs.open('tmp.json', 'r', 'utf-8')
                 parsedJson = json.load(f, encoding='utf-8')
                 f.close()
-                pretty = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8') 
-                self.txtInput.setText(pretty.encode('utf-8'))
+                pretty = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
+                new_body = pretty.encode('utf-8')
+                new_req = self.extender.helpers.buildHttpMessage(self.httpHeaders,new_body)
+                self.txtInput.setText(new_req)
                 text = self.txtInput.getText()
                 self.txtInput.setEditable(True)
             except:
@@ -159,9 +161,14 @@ class ProtobufHelperTab(IMessageEditorTab):
         if (self.txtInput.isTextModified()):
 
             try:
-                text = self.txtInput.getText()
+                content = self.txtInput.getText()
+                res = self.extender.helpers.analyzeResponse(content)
+                self.httpHeaders = res.getHeaders()  # remember headers
+
+                body = content[res.getBodyOffset():]
+
                 f = codecs.open('tmp.json', 'w', 'utf-8')
-                jsonFormat = json.loads(text.tostring(), encoding='utf-8')
+                jsonFormat = json.loads(body.tostring(), encoding='utf-8')
                 json.dump(jsonFormat, f, indent=4, sort_keys = True, ensure_ascii=False, encoding='utf-8')
                 f.close()
             except:
