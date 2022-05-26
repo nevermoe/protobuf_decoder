@@ -19,6 +19,8 @@ import json
 #sys.path.append('/Library/Python/2.7/site-packages')
 import codecs
 
+from parse import ParseProto
+
 
 class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
     
@@ -121,35 +123,15 @@ class ProtobufHelperTab(IMessageEditorTab):
             f.write(bytearray(data))
             f.close()
 
-            parsedJson = ''
             try:
-                proc = subprocess.Popen(['python', 'parse.py','dec'],\
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                proc.wait()
-                #f = open('tmp.json', 'r')
-                ##parsedJson = json.load(f)
-                #parsedJson = f.read()
-                #f.close()
-            except:
-                print traceback.format_exc()
-
-            output = proc.stdout.read()
-            errors = proc.stderr.read()
-            print "output: %s" % (output)
-            print "errors: %s" % (errors)
-
-            try:
-                f = codecs.open('tmp.json', 'r', 'utf-8')
-                parsedJson = json.load(f, encoding='utf-8')
-                f.close()
-                pretty = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
-                new_body = pretty.encode('utf-8')
+                parsedJson = ParseProto('tmp.pb')
+                new_body = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
                 new_req = self.extender.helpers.buildHttpMessage(self.httpHeaders,new_body)
                 self.txtInput.setText(new_req)
                 text = self.txtInput.getText()
                 self.txtInput.setEditable(True)
             except:
-                print traceback.format_exc()
+                print(traceback.format_exc())
 
 
         self.currentMessage = content
