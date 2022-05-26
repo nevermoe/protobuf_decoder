@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+#! /usr/bin/python
+
 from burp import IBurpExtender
 from burp import IMessageEditorTabFactory
 from burp import IMessageEditorTab
@@ -19,7 +22,7 @@ import json
 #sys.path.append('/Library/Python/2.7/site-packages')
 import codecs
 
-from parse import ParseProto
+from parse import ParseProto, SaveModification
 
 
 class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
@@ -35,7 +38,7 @@ class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
         self.helpers = callbacks.getHelpers()
         
         # set our extension name
-        callbacks.setExtensionName("Protobuf Decoder")
+        callbacks.setExtensionName("Protobuf Editor")
         
         # register ourselves as a message editor tab factory
         callbacks.registerMessageEditorTabFactory(self)
@@ -66,11 +69,12 @@ class ProtobufHelperTab(IMessageEditorTab):
         self.httpHeaders = None
         self.body = None
         self.content = None
+        self.currentMessage = None
 
         return
 
     def getTabCaption(self):
-        return "Protobuf Plain Text"
+        return "Protobuf"
         
     def getUiComponent(self):
         return self.txtInput.getComponent()
@@ -78,25 +82,6 @@ class ProtobufHelperTab(IMessageEditorTab):
     def isEnabled(self, content, isRequest):
 
         return True
-        #if isRequest:
-        #    req = self.extender.helpers.analyzeRequest(content)
-        #    headers = req.getHeaders()
-
-        #    if "Host: ttt" in headers:
-        #        self.key = some_key
-        #        return not self.extender.helpers.getRequestParameter(content, "x") is None
-
-        #    elif "Host: yyy" in headers:
-        #        self.key = some_key2
-        #        return not self.extender.helpers.getRequestParameter(content, "x") is None
-
-        #    else:
-        #        return False
-        #else:
-
-        #    return True
-
-                
 
     def isModified(self):
         return self.txtInput.isTextModified()
@@ -105,15 +90,15 @@ class ProtobufHelperTab(IMessageEditorTab):
         return self.txtInput.getSelectedText()
 
     def setMessage(self, content, isRequest):
- 
-        host = self.controller.getHttpService().getHost()
+
+        self.currentMessage = content
 
         if (content is None):
             # clear our display
             self.txtInput.setText(None)
             self.txtInput.setEditable(False)
 
-        if host == "example.com" or True:
+        try:
             res = self.extender.helpers.analyzeResponse(content)
             self.httpHeaders = res.getHeaders() #remember headers
 
@@ -123,19 +108,13 @@ class ProtobufHelperTab(IMessageEditorTab):
             f.write(bytearray(data))
             f.close()
 
-            try:
-                parsedJson = ParseProto('tmp.pb')
-                new_body = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
-                new_req = self.extender.helpers.buildHttpMessage(self.httpHeaders,new_body)
-                self.txtInput.setText(new_req)
-                text = self.txtInput.getText()
-                self.txtInput.setEditable(True)
-            except:
-                print(traceback.format_exc())
-
-
-        self.currentMessage = content
-
+            parsedJson = ParseProto('tmp.pb')
+            new_body = json.dumps(parsedJson, indent=4, sort_keys=True, ensure_ascii=False, encoding='utf-8')
+            new_req = self.extender.helpers.buildHttpMessage(self.httpHeaders,new_body)
+            self.txtInput.setText(new_req)
+            self.txtInput.setEditable(True)
+        except:
+            print(traceback.format_exc())
         return
 
     def getMessage(self):
@@ -153,28 +132,19 @@ class ProtobufHelperTab(IMessageEditorTab):
                 jsonFormat = json.loads(body.tostring(), encoding='utf-8')
                 json.dump(jsonFormat, f, indent=4, sort_keys = True, ensure_ascii=False, encoding='utf-8')
                 f.close()
-            except:
-                print traceback.format_exc()
 
-                
-            try:
-                proc = subprocess.Popen(['python', 'parse.py', 'enc'],\
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                proc.wait()
-                output = proc.stdout.read()
-                errors = proc.stderr.read()
-            except:
-                print traceback.format_exc()
+                f = codecs.open('tmp.json', 'r', 'utf-8')
+                messages = json.load(f, encoding='utf-8')
+                f.close()
+                # 现在的函数处理的数据，如果没有经过文件中转就会出错
+                SaveModification(messages, "tmp.pb")
 
-            print "output: %s" % (output)
-            print "error: %s" % (errors)
-            try:
                 f = open('tmp.pb', 'rb')
                 message = f.read()
                 f.close()
                 content = self.extender.helpers.buildHttpMessage(self.httpHeaders, message)
             except:
-                print traceback.format_exc()
+                print(traceback.format_exc())
             return content
 
         else:
